@@ -15,4 +15,12 @@ Export tool for SplitSecond R4 engine management software.  Exports R4 log data 
   * Round RPM to nearest 500 rpm increment on export (to align with map)
   * Round boost to nearest 0.5 psi (to align with map)
   
+## Usage Notes
+This software was built to be compatible with my usage of the R4 software.  
+* Map A is interpreted as degrees of timing retard
+* Map B is interpeted as milliseconds of auxiliary injector time
+* Aux C input is interpreted as boost in psi
+
+Please contact me if your usage differs and I will see if I can accomodate your usage in the code
+  
 ***Note:*** *This software has no association with SplitSecond and is not supported nor endorsed by SplitSecond.  This software is provided as-is with no support.*

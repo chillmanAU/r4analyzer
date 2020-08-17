@@ -1,5 +1,5 @@
 # r4analyzer
-Export tool for SplitSecond R4 engine management software.  Exports R4 log data to .csv file.  Useful for analysis of Air-Fuel ratios or other diagnosis.
+Export tool for SplitSecond R4 engine management software.  Exports R4 log data to .csv file.  Useful for analysis of Air-Fuel ratios or other diagnostics.
 
 ![R4Analyzer screenshot](r4analyzer.png)
 

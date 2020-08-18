@@ -1,0 +1,98 @@
+SELECT tmpRPM as RPM, Boost, InjA_Time, InjB_Time, AFR from (SELECT 
+                                                    rpm as tmpRPM,
+                                                     Boost,
+                                                    inja_time/10.0 AS InjA_Time,
+                                                    injb_time/10.0 AS InjB_Time,
+                                                    ROUND(((aux_in_c/255.0)*10+10),1) as AFR
+                                                    CASE WHEN pressure< 10000 THEN ROUND((pressure - 10000)*2.036/1000,1) ELSE ROUND((pressure - 10000)/1000.0, 1) END    
+                                                FROM Sessions
+                                                WHERE rpm > 0 AND recording_number = 6
+                                                
+                                                
+                                                )
+
+
+SELECT tmpRPM as RPM, Boost, InjA_Time, InjB_Time, AFR from (SELECT 
+                                                    (ROUND(ROUND((rpm/1000.0),1)*2)/2)*1000 as tmpRPM,
+                                                     Boost,
+                                                    inja_time/10.0 AS InjA_Time,
+                                                    injb_time/10.0 AS InjB_Time,
+                                                    ROUND(((aux_in_c/255.0)*10+10),1) as AFR
+                                                    CASE WHEN pressure < 10000 THEN ROUND(((pressure - 10000)*2.036)/1000,1) ELSE ROUND(round((pressure - 10000)/1000.0,1)*2)/2 END    
+                                                FROM Sessions
+                                                WHERE rpm > 0 AND recording_number = 6
+                                                
+                                                
+                                                )
+
+
+SELECT tmpRPM as RPM, Boost, InjA_Time, InjB_Time, AFR, Hits from (SELECT 
+                                                    (ROUND(ROUND((rpm/1000.0),1)*2)/2)*1000 as tmpRPM,
+                                                    , COUNT(*) as Hits Boost,
+                                                    inja_time/10.0 AS InjA_Time,
+                                                    injb_time/10.0 AS InjB_Time,
+                                                    ROUND(((aux_in_c/255.0)*10+10),1) as AFR
+                                                    CASE WHEN pressure < 10000 THEN ROUND(((pressure - 10000)*2.036)/1000,1) ELSE ROUND(round((pressure - 10000)/1000.0,1)*2)/2 END    
+                                                FROM Sessions
+                                                WHERE rpm > 0 AND recording_number = 6
+                                                GROUP BY 1,2,3,4
+                                                
+                                                )
+
+
+SELECT tmpRPM as RPM, Boost, InjA_Time, InjB_Time, AFR from (SELECT 
+                                                    rpm as tmpRPM,
+                                                    CASE WHEN pressure< 10000 THEN ROUND((pressure - 10000)*2.036/1000,1) ELSE ROUND((pressure - 10000)/1000.0, 1) END Boost,
+                                                    inja_time/10.0 AS InjA_Time,
+                                                    injb_time/10.0 AS InjB_Time,
+                                                    ROUND(((aux_in_c/255.0)*10+10),1) as AFR
+                                                        
+                                                FROM Sessions
+                                                WHERE rpm > 0 AND recording_number = 6
+                                                
+                                                
+                                                )
+
+
+SELECT tmpRPM as RPM, Boost, InjA_Time, InjB_Time, AFR from (SELECT 
+                                                    rpm as tmpRPM,
+                                                    CASE WHEN pressure< 10000 THEN ROUND((pressure - 10000)*2.036/1000,1) ELSE ROUND((pressure - 10000)/1000.0, 1) END Boost,
+                                                    inja_time/10.0 AS InjA_Time,
+                                                    injb_time/10.0 AS InjB_Time,
+                                                    ROUND(((aux_in_c/255.0)*10+10),1) as AFR
+                                                        
+                                                FROM Sessions
+                                                WHERE rpm > 0 AND recording_number = 6
+                                                
+                                                
+                                                )
+
+
+SELECT tmpRPM as RPM, Boost, InjA_Time, InjB_Time, AFR from (SELECT 
+                                                    (ROUND(ROUND((rpm/1000.0),1)*2)/2)*1000 as tmpRPM,
+                                                    CASE WHEN pressure < 10000 THEN ROUND(((pressure - 10000)*2.036)/1000,1) ELSE ROUND(round((pressure - 10000)/1000.0,1)*2)/2 END Boost,
+                                                    inja_time/10.0 AS InjA_Time,
+                                                    injb_time/10.0 AS InjB_Time,
+                                                    ROUND(((aux_in_c/255.0)*10+10),1) as AFR
+                                                        
+                                                FROM Sessions
+                                                WHERE rpm > 0 AND recording_number = 6
+                                                
+                                                
+                                                )
+
+
+SELECT tmpRPM as RPM, Boost, InjA_Time, InjB_Time, AFR, Hits from (SELECT 
+                                                    (ROUND(ROUND((rpm/1000.0),1)*2)/2)*1000 as tmpRPM,
+                                                    CASE WHEN pressure < 10000 THEN ROUND(((pressure - 10000)*2.036)/1000,1) ELSE ROUND(round((pressure - 10000)/1000.0,1)*2)/2 END Boost,
+                                                    inja_time/10.0 AS InjA_Time,
+                                                    injb_time/10.0 AS InjB_Time,
+                                                    ROUND(((aux_in_c/255.0)*10+10),1) as AFR
+                                                    , COUNT(*) as Hits    
+                                                FROM Sessions
+                                                WHERE rpm > 0 AND recording_number = 6
+                                                GROUP BY 1,2,3,4
+                                                
+                                                )
+
+

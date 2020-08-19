@@ -1,9 +1,0 @@
-C:\Users\charles.gillman\source\repos\R4Analyzer\bin\Debug\R4Analyzer.exe
-C:\Users\charles.gillman\source\repos\R4Analyzer\bin\Debug\R4Analyzer.pdb
-C:\Users\charles.gillman\source\repos\R4Analyzer\obj\Debug\R4Analyzer.csprojAssemblyReference.cache
-C:\Users\charles.gillman\source\repos\R4Analyzer\obj\Debug\R4Analyzer.frmMain.resources
-C:\Users\charles.gillman\source\repos\R4Analyzer\obj\Debug\R4Analyzer.Properties.Resources.resources
-C:\Users\charles.gillman\source\repos\R4Analyzer\obj\Debug\R4Analyzer.csproj.GenerateResource.cache
-C:\Users\charles.gillman\source\repos\R4Analyzer\obj\Debug\R4Analyzer.csproj.CoreCompileInputs.cache
-C:\Users\charles.gillman\source\repos\R4Analyzer\obj\Debug\R4Analyzer.exe
-C:\Users\charles.gillman\source\repos\R4Analyzer\obj\Debug\R4Analyzer.pdb

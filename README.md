@@ -1,5 +1,5 @@
 # r4analyzer
-Export tool for SplitSecond R4 engine management software.  Exports R4 log data to .csv file.  Useful for analysis of Air-Fuel ratios or other diagnostics.
+Export tool for SplitSecond R4 engine management software.  Exports R4 log data to .csv file.  Useful for analysis of Air-Fuel ratios (AFR) or other diagnostics.
 
 ![R4Analyzer screenshot](r4analyzer.png)
 
@@ -19,7 +19,7 @@ Export tool for SplitSecond R4 engine management software.  Exports R4 log data 
 This software was built to be compatible with my usage of the R4 software.  
 * Map A is interpreted as degrees of timing retard
 * Map B is interpeted as milliseconds of auxiliary injector time
-* Aux C input is interpreted as boost in psi
+* Aux C input is interpreted as AFR from a wideband O2 sensor
 
 Please contact me if your usage differs and I will see if I can accomodate your usage in the code
   

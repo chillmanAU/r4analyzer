@@ -32,14 +32,10 @@ namespace R4Analyzer
         public frmMain()
         {
             InitializeComponent();
+            this.strMDBFileName = "";
             this.strLocation = Directory.GetCurrentDirectory();
             this.oFileDialog = new OpenFileDialog();
 
-            this.strMDBFileName = "";
-            this.strADOConnectionString = "";
-            this.OleConnection = new OleDbConnection();
-            this.OleCmd = new OleDbCommand();
-            
             this.setupToolTips();
             this.SQLiteInit();
         }
@@ -172,23 +168,167 @@ namespace R4Analyzer
         {
             this.SQLiteExecuteNonQuery("VACUUM");
         }
- 
-        private int ExportRaw(string pFileName)
+
+        private void OleInit()
         {
-            string strWhere = "";
-            int iLines = 0;
+            this.OleConnection = new OleDbConnection();
+            this.OleCmd = new OleDbCommand();
 
-            if (this.cbxSessions.Text != "All")
+            this.strADOConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;" +
+                       "Data Source= '" + this.strMDBFileName + "';";
+            try
             {
-                strWhere = " WHERE recording_number = " + this.cbxSessions.Text ;
+                this.OleConnection.ConnectionString = this.strADOConnectionString;
+                this.OleConnection.Open();
             }
-            strWhere += ";";
+            catch (Exception ex)
+            {
+                this.errorToMessageBox(ex);
+            }
+        }
 
-            this.OleCmd.CommandText = "SELECT * FROM aquisition_data" + strWhere ;
+        private void btnMDB_Click(object sender, EventArgs e)
+        {
+            this.oFileDialog.Filter = "All files (*.mdb)|*.mdb";
+            this.oFileDialog.ShowDialog();
+            this.strMDBFileName = this.oFileDialog.FileName;
+            this.tbR4File.Text = this.strMDBFileName;
+            string strShortMDBFileName = Path.GetFileName(this.strMDBFileName);
+
+            Application.UseWaitCursor = true;
+            this.cbxSessions.Items.Clear();
+
+            if (!this.strMDBFileName.Equals(""))
+            {
+                this.OleInit();
+                this.ImportSessions();
+                this.ImportSessionData();
+                this.OleConnection.Close();
+            }
+            Application.UseWaitCursor = false;
+        }
+
+        private void ImportSessions()
+        {
+            this.Cursor = Cursors.WaitCursor;
+            this.UseWaitCursor = true;
+            this.gbActions.UseWaitCursor = true;
+
+            string strLastSession = "";
+            this.OleCmd = new OleDbCommand();
+            this.OleCmd = this.OleConnection.CreateCommand();
+            this.OleCmd.CommandText = "SELECT * FROM capture_data;";
             this.OleReader = OleCmd.ExecuteReader();
 
-            iLines = this.SaveToCSV(this.OleReader, pFileName, true,",");
+            while (this.OleReader.Read())
+            {
+                cbxSessions.Items.Add(this.OleReader[0].ToString());
+                strLastSession = this.OleReader[0].ToString();
+            }
+
+            this.cbxSessions.Items.Add("All");
+            this.cbxSessions.Text = strLastSession;
+
             this.OleReader.Close();
+            this.Cursor = Cursors.Default;
+        }
+
+        private void ImportSessionData()
+        {
+            int iCounter = 0;
+
+            this.OleCmd = this.OleConnection.CreateCommand();
+            this.OleCmd.CommandText = "SELECT * FROM aquisition_data ;";
+            this.OleReader = OleCmd.ExecuteReader();
+
+            this.SQLiteZap("Sessions");
+
+            string strPreparedStatement =
+                 @"INSERT into SESSIONS (rpm, pressure, inja_time, injb_time,
+                     aux_in_a, aux_in_b, aux_in_c, aux_in_d, count, recording_number, sample_number)
+                    VALUES 
+                    (@rpm, @pressure, @inja_time, @injb_time,
+                     @aux_in_a, @aux_in_b, @aux_in_c, @aux_in_d, @count, @recording_number, @sample_number)";
+
+            this.sqliteCmd.CommandText = strPreparedStatement;
+            this.sqliteCmd.Parameters.Add("@rpm", DbType.Int32);
+            this.sqliteCmd.Parameters.Add("@pressure", DbType.Decimal);
+            this.sqliteCmd.Parameters.Add("@inja_time", DbType.Decimal);
+            this.sqliteCmd.Parameters.Add("@injb_time", DbType.Decimal);
+            this.sqliteCmd.Parameters.Add("@aux_in_a", DbType.Int32);
+            this.sqliteCmd.Parameters.Add("@aux_in_b", DbType.Int32);
+            this.sqliteCmd.Parameters.Add("@aux_in_c", DbType.Int32);
+            this.sqliteCmd.Parameters.Add("@aux_in_d", DbType.Int32);
+            this.sqliteCmd.Parameters.Add("@count", DbType.Int32);
+            this.sqliteCmd.Parameters.Add("@recording_number", DbType.Int32);
+            this.sqliteCmd.Parameters.Add("@sample_number", DbType.Int32);
+
+            this.sqliteCmd.Prepare();
+
+            SQLiteTransaction transaction = this.sqliteCon.BeginTransaction();
+            this.sqliteCmd.Transaction = transaction;
+
+            while (this.OleReader.Read())
+            {
+                iCounter++;
+                for (var i = 0; i < 11; i++)
+                {
+                    this.sqliteCmd.Parameters[i].Value = this.OleReader[i].ToString();
+                }
+
+                this.sqliteCmd.ExecuteNonQuery();
+
+                if (iCounter % 10000 == 0)
+                {
+                    this.toolStripStatusLabel.Text = "Imported " + iCounter.ToString() + " records.";
+                    this.Refresh();
+                }
+            }
+            this.toolStripStatusLabel.Text = "Imported " + iCounter.ToString() + " records.";
+            transaction.Commit();
+            this.OleReader.Close();
+            this.btnRun.Enabled = true;
+        }
+
+        private void btnRun_Click(object sender, EventArgs e)
+        {
+            string message = "The following files were created:\n";
+            string caption = "Export Complete";
+            MessageBoxButtons buttons = MessageBoxButtons.OK;
+            string strFileName = "";
+            int iLines = 0;
+
+            
+            if (chkExportRaw.Checked)
+            {
+                strFileName = this.strMDBFileName + ".Session - " + this.cbxSessions.Text + ".raw.csv";
+                iLines = this.ExportRaw(strFileName);
+                message += " - " + strFileName + "\n" + iLines.ToString() + " records written";
+            }
+            if (chkExportConverted.Checked)
+            {
+                strFileName = this.strMDBFileName + ".Session - " + this.cbxSessions.Text + ".converted.csv";
+                iLines = this.ExportConverted(strFileName);
+                message += " - " + strFileName + "\n" + iLines.ToString() + " records written";
+            }
+            MessageBox.Show(message, caption, buttons);
+        }
+
+        private int ExportRaw(string pFileName)
+        {
+            string strSQLQuery = "SELECT * FROM Sessions";
+            int iLines = 0;
+            
+            if (this.cbxSessions.Text != "All")
+            {
+                strSQLQuery += " WHERE recording_number = " + this.cbxSessions.Text;
+            }
+
+            this.sqliteCmd.CommandText = strSQLQuery;
+            this.sqliteReader = sqliteCmd.ExecuteReader();
+
+            iLines = this.SaveToCSV(this.sqliteReader, pFileName, true, ",");
+            this.sqliteReader.Close();
 
             return iLines;
         }
@@ -203,7 +343,7 @@ namespace R4Analyzer
             string strCount = "";
             int iLines = 0;
 
-            
+
             if (chkInjAActive.Checked || chkInjBActive.Checked || cbxSessions.Text != "All") { strWhereClause += " AND "; }
             if (chkInjAActive.Checked) { strWhereClause += "inja_time > 0"; }
             if (chkInjAActive.Checked && chkInjBActive.Checked) { strWhereClause += " AND "; }
@@ -212,17 +352,17 @@ namespace R4Analyzer
             if (cbxSessions.Text != "All") { strWhereClause += "recording_number = " + cbxSessions.Text; }
             if (!String.IsNullOrEmpty(cbxSort1.Text)) { strOrderBy = "ORDER BY " + cbxSort1.Text; }
             if (!String.IsNullOrEmpty(cbxSort1.Text) && !String.IsNullOrEmpty(cbxSort2.Text)) { strOrderBy += ", " + cbxSort2.Text; }
-            if (rbRoundRPM.Checked) 
+            if (rbRoundRPM.Checked)
             {
                 strRPM = "(ROUND(ROUND((rpm/1000.0),1)*2)/2)*1000";
                 strPressure = "CASE WHEN pressure < 10000 THEN ROUND(((pressure - 10000)*2.036)/1000,1) ELSE ROUND(round((pressure - 10000)/1000.0,1)*2)/2 END";
             }
-            else 
+            else
             {
-                strPressure = "CASE WHEN pressure< 10000 THEN ROUND((pressure - 10000)*2.036/1000,1) ELSE ROUND((pressure - 10000)/1000.0, 1) END";  
+                strPressure = "CASE WHEN pressure< 10000 THEN ROUND((pressure - 10000)*2.036/1000,1) ELSE ROUND((pressure - 10000)/1000.0, 1) END";
 
             }
-            if (chkSummary.Checked) 
+            if (chkSummary.Checked)
             {
                 strCount = ", COUNT(*) as Hits";
                 strGroupBy = "GROUP BY 1,2,3,4";
@@ -305,143 +445,8 @@ namespace R4Analyzer
             }
             outputFile.Close();
             return iLines;
-            }
-
-        private void btnRun_Click(object sender, EventArgs e)
-        {
-            string message = "The following files were created:\n";
-            string caption = "Export Complete";
-            MessageBoxButtons buttons = MessageBoxButtons.OK;
-            string strFileName = "";
-            int iLines = 0;
-
-            
-            if (chkExportRaw.Checked)
-            {
-                strFileName = this.strMDBFileName + ".Session - " + this.cbxSessions.Text + ".raw.csv";
-                iLines = this.ExportRaw(strFileName);
-                message += " - " + strFileName + "\n" + iLines.ToString() + " records written";
-            }
-            if (chkExportConverted.Checked)
-            {
-                strFileName = this.strMDBFileName + ".Session - " + this.cbxSessions.Text + ".converted.csv";
-                iLines = this.ExportConverted(strFileName);
-                message += " - " + strFileName + "\n" + iLines.ToString() + " records written";
-            }
-            MessageBox.Show(message, caption, buttons);
         }
-
-        private void ImportSessions()
-        {
-            this.Cursor = Cursors.WaitCursor;
-            this.UseWaitCursor = true;
-            this.gbActions.UseWaitCursor = true;
-
-            string strLastSession = "";
-            this.OleCmd = this.OleConnection.CreateCommand();
-            this.OleCmd.CommandText = "SELECT * FROM capture_data;";
-            this.OleReader = OleCmd.ExecuteReader();
-
-            while (this.OleReader.Read())
-            {
-                cbxSessions.Items.Add(this.OleReader[0].ToString());
-                strLastSession = this.OleReader[0].ToString();
-            }
-
-            this.cbxSessions.Items.Add("All");
-            this.cbxSessions.Text = strLastSession;
-
-            this.OleReader.Close();
-            this.Cursor = Cursors.Default;
-        }
-        private void btnMDB_Click(object sender, EventArgs e)
-        {
-            this.oFileDialog.Filter = "All files (*.mdb)|*.mdb";
-            this.oFileDialog.ShowDialog();
-            this.strMDBFileName = this.oFileDialog.FileName;
-            this.tbR4File.Text = this.strMDBFileName;
-            string strShortMDBFileName = Path.GetFileName(this.strMDBFileName);
-
-            Application.UseWaitCursor = true;
-            this.cbxSessions.Items.Clear();
-
-            if (!this.strMDBFileName.Equals(""))
-            {
-                this.strADOConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;" +
-                                       "Data Source= '" + this.strMDBFileName + "';";
-                try
-                {
-                    this.OleConnection.ConnectionString = this.strADOConnectionString;
-                    this.OleConnection.Open();
-                }
-                catch (Exception ex)
-                {
-                    this.errorToMessageBox(ex);
-                }
-                this.ImportSessions();
-                this.ImportSessionData();
-                this.OleConnection.Close();
-            }
-            Application.UseWaitCursor = false;
-        }
-
-        private void ImportSessionData()
-        {
-            int iCounter = 0;
-
-            this.OleCmd = this.OleConnection.CreateCommand();
-            this.OleCmd.CommandText = "SELECT * FROM aquisition_data ;";
-            this.OleReader = OleCmd.ExecuteReader();
-
-            this.SQLiteZap("Sessions");
-
-            string strPreparedStatement =
-                 @"INSERT into SESSIONS (rpm, pressure, inja_time, injb_time,
-                     aux_in_a, aux_in_b, aux_in_c, aux_in_d, count, recording_number, sample_number)
-                    VALUES 
-                    (@rpm, @pressure, @inja_time, @injb_time,
-                     @aux_in_a, @aux_in_b, @aux_in_c, @aux_in_d, @count, @recording_number, @sample_number)";
-
-            this.sqliteCmd.CommandText = strPreparedStatement;
-            this.sqliteCmd.Parameters.Add("@rpm", DbType.Int32);
-            this.sqliteCmd.Parameters.Add("@pressure", DbType.Decimal);
-            this.sqliteCmd.Parameters.Add("@inja_time", DbType.Decimal);
-            this.sqliteCmd.Parameters.Add("@injb_time", DbType.Decimal);
-            this.sqliteCmd.Parameters.Add("@aux_in_a", DbType.Int32);
-            this.sqliteCmd.Parameters.Add("@aux_in_b", DbType.Int32);
-            this.sqliteCmd.Parameters.Add("@aux_in_c", DbType.Int32);
-            this.sqliteCmd.Parameters.Add("@aux_in_d", DbType.Int32);
-            this.sqliteCmd.Parameters.Add("@count", DbType.Int32);
-            this.sqliteCmd.Parameters.Add("@recording_number", DbType.Int32);
-            this.sqliteCmd.Parameters.Add("@sample_number", DbType.Int32);
-
-            this.sqliteCmd.Prepare();
-
-            SQLiteTransaction transaction = this.sqliteCon.BeginTransaction();
-            this.sqliteCmd.Transaction = transaction;
-
-            while (this.OleReader.Read())
-            {
-                iCounter++;
-                for (var i = 0; i < 11; i++)
-                {
-                    this.sqliteCmd.Parameters[i].Value = this.OleReader[i].ToString();
-                }
-
-                this.sqliteCmd.ExecuteNonQuery();
-
-                if (iCounter % 10000 == 0)
-                {
-                    this.toolStripStatusLabel.Text = "Imported " + iCounter.ToString() + " records.";
-                    this.Refresh();
-                }
-            }
-            this.toolStripStatusLabel.Text = "Imported " + iCounter.ToString() + " records.";
-            transaction.Commit();
-            this.OleReader.Close();
-            this.btnRun.Enabled = true;
-        }
-
+     
         private void btnExit_Click(object sender, EventArgs e)
         {
             this.Dispose();
@@ -473,14 +478,6 @@ namespace R4Analyzer
             this.chkAllRecords.Checked = false;
         }
 
-        private void errorToMessageBox(Exception pEx)
-        {
-            string message = pEx.Message;
-            string caption = "Application Error";
-            MessageBoxButtons buttons = MessageBoxButtons.OK;
-            MessageBox.Show(message, caption, buttons);
-        }
-
         private void cbxSort1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cbxSort1.Text != "") { cbxSort2.Enabled = true; } 
@@ -498,5 +495,12 @@ namespace R4Analyzer
             chkSummary.Enabled = false;
         }
 
+        private void errorToMessageBox(Exception pEx)
+        {
+            string message = pEx.Message;
+            string caption = "Application Error";
+            MessageBoxButtons buttons = MessageBoxButtons.OK;
+            MessageBox.Show(message, caption, buttons);
+        }
     }
 }

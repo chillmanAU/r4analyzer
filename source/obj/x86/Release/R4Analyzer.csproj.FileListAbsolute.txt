@@ -21,3 +21,4 @@ C:\Users\charl\Dropbox\Projects - .NET\r4analyzer\source\obj\x86\Release\R4Analy
 C:\Users\charl\Dropbox\Projects - .NET\r4analyzer\source\obj\x86\Release\R4Analyzer.csproj.CopyComplete
 C:\Users\charl\Dropbox\Projects - .NET\r4analyzer\source\obj\x86\Release\R4Analyzer.exe
 C:\Users\charl\Dropbox\Projects - .NET\r4analyzer\source\obj\x86\Release\R4Analyzer.pdb
+C:\Users\charl\Dropbox\Projects - .NET\r4analyzer\source\obj\x86\Release\R4Analyzer.csprojAssemblyReference.cache

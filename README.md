@@ -24,6 +24,6 @@ This software was built to be compatible with my usage of the R4 software.
 Please contact me if your usage differs and I will see if I can accomodate your usage in the code
 
 ## Updates
-### August 2020 - checkout the video on how to use the tool https://www.youtube.com/watch?v=AV3IiODIcWs
+August 2020 - checkout the video on how to use the tool https://www.youtube.com/watch?v=AV3IiODIcWs
 
 ***Note:*** *This software has no association with SplitSecond and is not supported nor endorsed by SplitSecond.  This software is provided as-is with no support.*
